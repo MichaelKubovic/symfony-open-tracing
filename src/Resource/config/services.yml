@@ -1,10 +1,10 @@
 services:
     open_tracing.tracer:
         class: Adtechpotok\Bundle\SymfonyOpenTracing\Service\OpenTracingService
-        arguments:
-            - '%symfony_open_tracing.enabled%'
-            - '%symfony_open_tracing.service_name%'
-            - '%symfony_open_tracing.tracer_config%'
+        tags:
+            - { name: monolog.logger, channel: tracing }
+        calls:
+            - { method: setLogger, arguments: ['@logger'] }
 
     open_tracing.name_getter:
         class: Adtechpotok\Bundle\SymfonyOpenTracing\Service\RootSpanNameBuilder

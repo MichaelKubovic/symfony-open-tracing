@@ -8,34 +8,65 @@ use Jaeger\Config;
 use OpenTracing\GlobalTracer;
 use OpenTracing\NoopTracer;
 use OpenTracing\Tracer;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\NullLogger;
 
 class OpenTracingService
 {
+    use LoggerAwareTrait;
+
     /**
      * @var Tracer
      */
     protected $tracer;
 
     /**
-     * @param string $appName
-     * @param array  $config
+     * @var bool
      */
-    public function __construct(bool $enabled, string $appName, array $config)
-    {
-        if (!$enabled) {
-            $this->tracer = new NoopTracer();
-        } else {
-            (new Config($config, $appName))->initializeTracer();
-
-            $this->tracer = GlobalTracer::get();
-        }
-    }
+    private $enabled;
 
     /**
-     * @return Tracer
+     * @var string
      */
+    private $appName;
+
+    /**
+     * @var array
+     */
+    private $config;
+
+    /**
+     * @var CacheItemPoolInterface
+     */
+    private $cache;
+
+    public function __construct(bool $enabled, string $appName, array $config, CacheItemPoolInterface $cache)
+    {
+        $this->logger = new NullLogger();
+        $this->enabled = $enabled;
+        $this->appName = $appName;
+        $this->config = $config;
+        $this->cache = $cache;
+    }
+
     public function getTracer(): Tracer
     {
-        return $this->tracer;
+        if ($this->tracer !== null) {
+            return $this->tracer;
+        }
+
+        return $this->tracer = $this->initializeTracer();
+    }
+
+    private function initializeTracer()
+    {
+        if (!$this->enabled) {
+            return new NoopTracer();
+        }
+
+        (new Config($this->config, $this->appName, $this->logger, $this->cache))->initializeTracer();
+
+        return GlobalTracer::get();
     }
 }

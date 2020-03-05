@@ -7,10 +7,11 @@ namespace Adtechpotok\Bundle\SymfonyOpenTracing\EventListener;
 use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByRequest;
 use Adtechpotok\Bundle\SymfonyOpenTracing\Service\OpenTracingService;
 use OpenTracing\Formats;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
-use Symfony\Component\HttpKernel\Event\PostResponseEvent;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\Event\TerminateEvent;
 
 class HttpListener
 {
@@ -25,21 +26,28 @@ class HttpListener
     protected $nameGetter;
 
     /**
+     * @var string[]
+     */
+    private $skippedRoutes;
+
+    /**
      * HttpListener constructor.
      *
      * @param OpenTracingService   $service
      * @param GetSpanNameByRequest $nameGetter
+     * @param string[] $skippedRoutes
      */
-    public function __construct(OpenTracingService $service, GetSpanNameByRequest $nameGetter)
+    public function __construct(OpenTracingService $service, GetSpanNameByRequest $nameGetter, array $skippedRoutes = [])
     {
         $this->openTracing = $service;
         $this->nameGetter = $nameGetter;
+        $this->skippedRoutes = $skippedRoutes;
     }
 
     /**
-     * @param GetResponseEvent $event
+     * @param RequestEvent $event
      */
-    public function onKernelRequest(GetResponseEvent $event): void
+    public function onKernelRequest(RequestEvent $event): void
     {
         $tracer = $this->openTracing->getTracer();
         $request = $event->getRequest();
@@ -61,9 +69,9 @@ class HttpListener
     }
 
     /**
-     * @param FilterResponseEvent $event
+     * @param ResponseEvent $event
      */
-    public function onKernelResponse(FilterResponseEvent $event): void
+    public function onKernelResponse(ResponseEvent $event): void
     {
         $span = $this->openTracing->getTracer()->getActiveSpan();
 
@@ -75,9 +83,9 @@ class HttpListener
     }
 
     /**
-     * @param PostResponseEvent $event
+     * @param TerminateEvent $event
      */
-    public function onKernelTerminate(PostResponseEvent $event): void
+    public function onKernelTerminate(TerminateEvent $event): void
     {
         $span = $this->openTracing->getTracer()->getActiveSpan();
 
@@ -91,9 +99,9 @@ class HttpListener
     }
 
     /**
-     * @param GetResponseForExceptionEvent $event
+     * @param ExceptionEvent $event
      */
-    public function onKernelException(GetResponseForExceptionEvent $event): void
+    public function onKernelException(ExceptionEvent $event): void
     {
         $span = $this->openTracing->getTracer()->getActiveSpan();
 
@@ -108,9 +116,9 @@ class HttpListener
 
             $span->log([
                 'error.kind'   => 'Exception',
-                'error.object' => \get_class($event->getException()),
-                'message'      => $event->getException()->getMessage(),
-                'stack'        => $event->getException()->getTraceAsString(),
+                'error.object' => \get_class($event->getThrowable()),
+                'message'      => $event->getThrowable()->getMessage(),
+                'stack'        => $event->getThrowable()->getTraceAsString(),
             ]);
 
             $span->setTag('error', true);
@@ -119,5 +127,10 @@ class HttpListener
         }
 
         $this->openTracing->getTracer()->flush();
+    }
+
+    private function skipRequest(Request $request): bool
+    {
+        return in_array($request->attributes->get('_route'), $this->skippedRoutes);
     }
 }

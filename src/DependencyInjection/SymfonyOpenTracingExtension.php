@@ -7,6 +7,7 @@ namespace Adtechpotok\Bundle\SymfonyOpenTracing\DependencyInjection;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\ConfigurableExtension;
 
 class SymfonyOpenTracingExtension extends ConfigurableExtension
@@ -19,8 +20,17 @@ class SymfonyOpenTracingExtension extends ConfigurableExtension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resource/config'));
         $loader->load('services.yml');
 
-        $container->setParameter('symfony_open_tracing.service_name', $mergedConfig['service_name']);
-        $container->setParameter('symfony_open_tracing.enabled', $mergedConfig['enabled']);
-        $container->setParameter('symfony_open_tracing.tracer_config', $mergedConfig['tracer_config']);
+        $container
+            ->getDefinition('open_tracing.tracer')
+            ->setArguments([
+                $mergedConfig['enabled'],
+                $mergedConfig['service_name'],
+                $mergedConfig['tracer_config'],
+                new Reference('cache.app'),
+            ]);
+
+        $container
+            ->getDefinition('open_tracing.http_listener')
+            ->setArgument('$skippedRoutes', $mergedConfig['http_listener_skipped_routes'] ?? []);
     }
 }
