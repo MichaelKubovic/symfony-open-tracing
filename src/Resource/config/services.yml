@@ -40,6 +40,16 @@ services:
             - '@open_tracing.tracer'
             - '@open_tracing.name_getter'
         tags:
-            - {name: kernel.event_listener, event: console.command}
-            - {name: kernel.event_listener, event: console.terminate}
-            - {name: kernel.event_listener, event: console.error}
+            - { name: kernel.event_listener, event: console.command }
+            - { name: kernel.event_listener, event: console.terminate }
+            - { name: kernel.event_listener, event: console.error }
+
+    open_tracing.messenger:
+        class: Adtechpotok\Bundle\SymfonyOpenTracing\EventListener\MessengerListener
+        arguments:
+            - '@open_tracing.tracer'
+            - '@open_tracing.name_getter'
+        tags:
+            - { name: kernel.event_listener, event: Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent, method: onWorkerMessageReceived }
+            - { name: kernel.event_listener, event: Symfony\Component\Messenger\Event\WorkerMessageHandledEvent, method: onWorkerMessageHandled }
+            - { name: kernel.event_listener, event: Symfony\Component\Messenger\Event\WorkerMessageFailedEvent, method: onWorkerMessageFailed }

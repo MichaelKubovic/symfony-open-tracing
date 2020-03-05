@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Adtechpotok\Bundle\SymfonyOpenTracing\EventListener;
 
 use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByRequest;
-use Adtechpotok\Bundle\SymfonyOpenTracing\Service\OpenTracingService;
 use OpenTracing\Formats;
 use OpenTracing\Tracer;
 use Symfony\Component\HttpFoundation\Request;
