@@ -47,6 +47,10 @@ class HttpListener
     {
         $request = $event->getRequest();
 
+        if ($this->skipRequest($request)) {
+            return;
+        }
+
         $headers = [];
         foreach ($request->headers->all() as $key => $values) {
             $headers[$key] = is_array($values) ? $values[0] : $values;
@@ -68,6 +72,10 @@ class HttpListener
      */
     public function onKernelResponse(ResponseEvent $event): void
     {
+        if ($this->skipRequest($event->getRequest())) {
+            return;
+        }
+
         $span = $this->tracer->getActiveSpan();
 
         if ($span) {
@@ -98,6 +106,10 @@ class HttpListener
      */
     public function onKernelException(ExceptionEvent $event): void
     {
+        if ($this->skipRequest($event->getRequest())) {
+            return;
+        }
+
         $span = $this->tracer->getActiveSpan();
 
         if ($span) {
