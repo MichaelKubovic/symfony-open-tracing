@@ -26,12 +26,12 @@ class HttpListener
     protected $nameGetter;
 
     /**
-     * @var string[]
+     * @var array<string, bool>
      */
     private $skippedRoutes;
 
     /**
-     * @param string[] $skippedRoutes
+     * @param array<string, bool> $skippedRoutes route-indexed list of skipped routes
      */
     public function __construct(Tracer $tracer, GetSpanNameByRequest $nameGetter, array $skippedRoutes = [])
     {
@@ -138,6 +138,6 @@ class HttpListener
 
     private function skipRequest(Request $request): bool
     {
-        return in_array($request->attributes->get('_route'), $this->skippedRoutes);
+        return isset($this->skippedRoutes[$request->attributes->get('_route')]);
     }
 }

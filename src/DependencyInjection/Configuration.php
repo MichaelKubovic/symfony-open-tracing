@@ -46,6 +46,7 @@ class Configuration implements ConfigurationInterface
                     ->end()
                 ->end()
                 ->arrayNode('http_listener_skipped_routes')
+                    ->beforeNormalization()->castToArray()->end()
                     ->prototype('scalar')->end()
                 ->end()
             ->end();

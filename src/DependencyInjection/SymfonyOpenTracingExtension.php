@@ -25,7 +25,7 @@ class SymfonyOpenTracingExtension extends ConfigurableExtension
 
         $container
             ->getDefinition('open_tracing.http_listener')
-            ->setArgument('$skippedRoutes', $mergedConfig['http_listener_skipped_routes'] ?? []);
+            ->setArgument('$skippedRoutes', array_flip($mergedConfig['http_listener_skipped_routes']));
     }
 
     private function configureJaegerTracer(ContainerBuilder $container, array $config)
