@@ -31,11 +31,8 @@ class RootSpanNameBuilder implements GetSpanNameByRequest, GetSpanNameByCommand,
      */
     private $messageNamePrefix;
 
-    public function __construct(
-        string $httpNamePrefix = 'http-tracing',
-        string $cliNamePrefix = 'cli-tracing',
-        string $messageNamePrefix = 'message-tracing'
-    ) {
+    public function __construct(string $httpNamePrefix = 'http-tracing', string $cliNamePrefix = 'cli-tracing', string $messageNamePrefix = 'message-tracing')
+    {
         $this->httpNamePrefix = $httpNamePrefix;
         $this->cliNamePrefix = $cliNamePrefix;
         $this->messageNamePrefix = $messageNamePrefix;
