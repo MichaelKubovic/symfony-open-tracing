@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Adtechpotok\Bundle\SymfonyOpenTracing\EventListener;
 
 use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByMessage;
+use OpenTracing\StartSpanOptions;
 use OpenTracing\Tracer;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
@@ -32,8 +33,11 @@ class MessengerListener
     {
         $envelope = $event->getEnvelope();
         $name = $this->nameGetter->getNameByMessage($envelope);
-        $this->tracer->startActiveSpan($name);
-        $this->tracer->getActiveSpan()->setTag('messenger.message', get_class($envelope->getMessage()));
+        $this->tracer->startActiveSpan($name, [
+            'tags' => [
+                'messenger.message' => get_class($envelope->getMessage()),
+            ]
+        ]);
     }
 
     public function onWorkerMessageHandled(WorkerMessageHandledEvent $event)
