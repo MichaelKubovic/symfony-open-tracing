@@ -10,11 +10,11 @@
   ],
   "require": {
     "php": ">=7.1",
-    "jonahgeorge/jaeger-client-php": "~0.4",
-    "symfony/config": "~3.4|~4.0",
-    "symfony/console": "~3.4|~4.0",
-    "symfony/dependency-injection": "~3.4.6|~4.1",
-    "symfony/http-kernel": "~3.4|~4.1",
+    "jonahgeorge/jaeger-client-php": "~0.5",
+    "symfony/config": "~4.0|~5.0",
+    "symfony/console": "~4.0|~5.0",
+    "symfony/dependency-injection": "~4.1|~5.0",
+    "symfony/http-kernel": "~4.1|~5.0",
     "symfony/serializer-pack": "^1.0"
   },
   "require-dev": {

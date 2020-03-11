@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace Adtechpotok\Bundle\SymfonyOpenTracing\Service;
 
 use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByCommand;
+use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByMessage;
 use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByRequest;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\Stamp\BusNameStamp;
 
-class RootSpanNameBuilder implements GetSpanNameByRequest, GetSpanNameByCommand
+class RootSpanNameBuilder implements GetSpanNameByRequest, GetSpanNameByCommand, GetSpanNameByMessage
 {
     protected const ROUTE_NOT_FOUND = 'route_not_found';
 
@@ -24,15 +27,15 @@ class RootSpanNameBuilder implements GetSpanNameByRequest, GetSpanNameByCommand
     protected $cliNamePrefix;
 
     /**
-     * RootSpanNameBuilder constructor.
-     *
-     * @param string $httpNamePrefix
-     * @param string $cliNamePrefix
+     * @var string
      */
-    public function __construct(string $httpNamePrefix = 'http-tracing', string $cliNamePrefix = 'cli-tracing')
+    private $messageNamePrefix;
+
+    public function __construct(string $httpNamePrefix = 'http-tracing', string $cliNamePrefix = 'cli-tracing', string $messageNamePrefix = 'message-tracing')
     {
         $this->httpNamePrefix = $httpNamePrefix;
         $this->cliNamePrefix = $cliNamePrefix;
+        $this->messageNamePrefix = $messageNamePrefix;
     }
 
     /**
@@ -53,5 +56,12 @@ class RootSpanNameBuilder implements GetSpanNameByRequest, GetSpanNameByCommand
     public function getNameByCommand(Command $command): string
     {
         return sprintf('%s.%s', $this->cliNamePrefix, $command->getName());
+    }
+
+    public function getNameByMessage(Envelope $envelope): string
+    {
+        /** @var BusNameStamp $busStamp */
+        $busStamp = $envelope->last(BusNameStamp::class);
+        return sprintf('%s.%s', $this->messageNamePrefix, $busStamp->getBusName());
     }
 }

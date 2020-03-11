@@ -19,8 +19,23 @@ class SymfonyOpenTracingExtension extends ConfigurableExtension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resource/config'));
         $loader->load('services.yml');
 
-        $container->setParameter('symfony_open_tracing.service_name', $mergedConfig['service_name']);
-        $container->setParameter('symfony_open_tracing.enabled', $mergedConfig['enabled']);
-        $container->setParameter('symfony_open_tracing.tracer_config', $mergedConfig['tracer_config']);
+        if ($mergedConfig['enabled']) {
+            $this->configureJaegerTracer($container, $mergedConfig);
+        }
+
+        $container
+            ->getDefinition('open_tracing.http_listener')
+            ->setArgument('$skippedRoutes', array_flip($mergedConfig['http_listener_skipped_routes']));
+    }
+
+    private function configureJaegerTracer(ContainerBuilder $container, array $config)
+    {
+        $container
+            ->getDefinition('jaeger.config')
+            ->setArgument('$config', $config['tracer_config'])
+            ->setArgument('$serviceName', $config['service_name'])
+        ;
+
+        $container->setAlias('open_tracing.tracer', 'jaeger.tracer');
     }
 }

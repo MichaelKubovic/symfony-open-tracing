@@ -45,6 +45,10 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('debug_id_header_key')->defaultNull()->end()
                     ->end()
                 ->end()
+                ->arrayNode('http_listener_skipped_routes')
+                    ->beforeNormalization()->castToArray()->end()
+                    ->prototype('scalar')->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

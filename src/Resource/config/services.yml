@@ -1,10 +1,21 @@
 services:
-    open_tracing.tracer:
-        class: Adtechpotok\Bundle\SymfonyOpenTracing\Service\OpenTracingService
+    OpenTracing\Tracer: '@open_tracing.tracer'
+    open_tracing.tracer: '@open_tracing.tracer.noop'
+    open_tracing.tracer.noop:
+        class: OpenTracing\NoopTracer
+
+    jaeger.tracer:
+        class: Jaeger\Tracer
+        factory: ['@jaeger.config', 'initializeTracer']
+
+    jaeger.config:
+        class: Jaeger\Config
+        lazy: true
         arguments:
-            - '%symfony_open_tracing.enabled%'
-            - '%symfony_open_tracing.service_name%'
-            - '%symfony_open_tracing.tracer_config%'
+            $logger: '@logger'
+            $cache: '@cache.app'
+        tags:
+            - { name: monolog.logger, channel: tracing }
 
     open_tracing.name_getter:
         class: Adtechpotok\Bundle\SymfonyOpenTracing\Service\RootSpanNameBuilder
@@ -29,10 +40,16 @@ services:
             - '@open_tracing.tracer'
             - '@open_tracing.name_getter'
         tags:
-            - {name: kernel.event_listener, event: console.command}
-            - {name: kernel.event_listener, event: console.terminate}
-            - {name: kernel.event_listener, event: console.error}
+            - { name: kernel.event_listener, event: console.command }
+            - { name: kernel.event_listener, event: console.terminate }
+            - { name: kernel.event_listener, event: console.error }
 
-    open_tracing.tracer.jaeger:
-        class: OpenTracing\Tracer
-        factory: ['@open_tracing.tracer', getTracer]
+    open_tracing.messenger:
+        class: Adtechpotok\Bundle\SymfonyOpenTracing\EventListener\MessengerListener
+        arguments:
+            - '@open_tracing.tracer'
+            - '@open_tracing.name_getter'
+        tags:
+            - { name: kernel.event_listener, event: Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent, method: onWorkerMessageReceived }
+            - { name: kernel.event_listener, event: Symfony\Component\Messenger\Event\WorkerMessageHandledEvent, method: onWorkerMessageHandled }
+            - { name: kernel.event_listener, event: Symfony\Component\Messenger\Event\WorkerMessageFailedEvent, method: onWorkerMessageFailed }

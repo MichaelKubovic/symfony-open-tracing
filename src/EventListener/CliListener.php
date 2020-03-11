@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Adtechpotok\Bundle\SymfonyOpenTracing\EventListener;
 
 use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByCommand;
-use Adtechpotok\Bundle\SymfonyOpenTracing\Service\OpenTracingService;
+use OpenTracing\Tracer;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleErrorEvent;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
@@ -13,24 +13,18 @@ use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 class CliListener
 {
     /**
-     * @var OpenTracingService
+     * @var Tracer
      */
-    protected $openTracing;
+    protected $tracer;
 
     /**
      * @var GetSpanNameByCommand
      */
     protected $nameGetter;
 
-    /**
-     * HttpListener constructor.
-     *
-     * @param OpenTracingService   $service
-     * @param GetSpanNameByCommand $nameGetter
-     */
-    public function __construct(OpenTracingService $service, GetSpanNameByCommand $nameGetter)
+    public function __construct(Tracer $tracer, GetSpanNameByCommand $nameGetter)
     {
-        $this->openTracing = $service;
+        $this->tracer = $tracer;
         $this->nameGetter = $nameGetter;
     }
 
@@ -39,11 +33,9 @@ class CliListener
      */
     public function onConsoleCommand(ConsoleCommandEvent $event): void
     {
-        $tracer = $this->openTracing->getTracer();
-
         $name = $this->nameGetter->getNameByCommand($event->getCommand());
 
-        $tracer->startActiveSpan($name);
+        $this->tracer->startActiveSpan($name);
     }
 
     /**
@@ -51,13 +43,13 @@ class CliListener
      */
     public function onConsoleTerminate(ConsoleTerminateEvent $event): void
     {
-        $span = $this->openTracing->getTracer()->getActiveSpan();
+        $span = $this->tracer->getActiveSpan();
 
         if ($span) {
             $span->finish();
         }
 
-        $this->openTracing->getTracer()->flush();
+        $this->tracer->flush();
     }
 
     /**
@@ -65,7 +57,7 @@ class CliListener
      */
     public function onConsoleError(ConsoleErrorEvent $event): void
     {
-        $span = $this->openTracing->getTracer()->getActiveSpan();
+        $span = $this->tracer->getActiveSpan();
 
         if ($span) {
             $span->log([
