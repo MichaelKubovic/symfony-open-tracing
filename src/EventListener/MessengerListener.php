@@ -10,6 +10,7 @@ use OpenTracing\Tracer;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent;
+use Symfony\Component\Messenger\Stamp\BusNameStamp;
 
 class MessengerListener
 {
@@ -46,6 +47,9 @@ class MessengerListener
 
         if ($span) {
             $span->setTag('messenger.transport', $event->getReceiverName());
+            /** @var BusNameStamp $busStamp */
+            $busStamp = $event->getEnvelope()->last(BusNameStamp::class);
+            $span->setTag('messenger.bus', $busStamp->getBusName());
             $span->finish();
         }
 

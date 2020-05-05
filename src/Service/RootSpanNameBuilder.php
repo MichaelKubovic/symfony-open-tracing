@@ -10,7 +10,8 @@ use Adtechpotok\Bundle\SymfonyOpenTracing\Contract\GetSpanNameByRequest;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\Stamp\BusNameStamp;
+use function end;
+use function Symfony\Component\String\u;
 
 class RootSpanNameBuilder implements GetSpanNameByRequest, GetSpanNameByCommand, GetSpanNameByMessage
 {
@@ -60,8 +61,9 @@ class RootSpanNameBuilder implements GetSpanNameByRequest, GetSpanNameByCommand,
 
     public function getNameByMessage(Envelope $envelope): string
     {
-        /** @var BusNameStamp $busStamp */
-        $busStamp = $envelope->last(BusNameStamp::class);
-        return sprintf('%s.%s', $this->messageNamePrefix, $busStamp->getBusName());
+        $classParts = explode('\\', get_class($envelope->getMessage()));
+        $eventName = u(end($classParts))->camel();
+
+        return sprintf('%s.%s', $this->messageNamePrefix, $eventName);
     }
 }
